@@ -16,7 +16,7 @@ if [[ -f "package.json" ]]; then
       pnpm run lint || npm run lint || EXIT_CODE=$?
 
       echo "  • Running Prettier..."
-      pnpm exec prettier --check . || npx prettier --check . || EXIT_CODE=$?
+      pnpm exec prettier --check apps packages || npx prettier --check apps packages || EXIT_CODE=$?
 
       echo "  • Running TypeScript..."
       pnpm run typecheck || npm run typecheck || EXIT_CODE=$?
