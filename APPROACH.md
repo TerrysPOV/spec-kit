@@ -22,9 +22,54 @@ Spec Kit embraces a **polyglot-native, phase-driven** approach to software devel
 - API contracts defined
 - Success criteria established
 
-**Validation**: Documentation review, stakeholder approval
+**Plugin Artifacts**:
 
-### 2. Implement Phase
+- `reports/security/spec-findings.md` - Security requirements and threat model
+  - Plugin: `/security-guidance --phase=spec`
+  - Plugin: `/backend-api-security --mode=threat-model` (if APIs present)
+- **Gating**: Artifact must exist; CRITICAL/HIGH findings require mitigation plan
+
+**Validation**: Documentation review, stakeholder approval, security requirements validated
+
+### 2. Plan Phase
+
+**Goal**: Design implementation approach and architecture
+
+**Deliverables**:
+
+- Implementation plan documented
+- Technical design decisions
+- Dependency analysis
+- Risk assessment
+
+**Plugin Artifacts**:
+
+- `reports/security/plan-scan.md` - SAST and dependency scan results
+  - Plugin: `/security-scanning --mode=sast,deps`
+- **Gating**: Artifact must exist; CRITICAL/HIGH findings block implementation start
+
+**Validation**: Plan reviewed, dependencies validated, security risks assessed
+
+### 3. Tasks Phase
+
+**Goal**: Break down implementation into trackable tasks
+
+**Deliverables**:
+
+- Task breakdown documented
+- Acceptance criteria defined
+- Test strategy outlined
+- Effort estimates
+
+**Plugin Artifacts**:
+
+- `reports/tests/tasks-unit-help.md` - Unit test scaffolding (Python projects only)
+  - Plugin: `/unit-testing --mode=scaffold` (conditional)
+- **Gating**: Artifact required for Python projects; test infrastructure validated
+
+**Validation**: Tasks reviewed, test strategy approved
+
+### 4. Implement Phase
 
 **Goal**: Write production-quality code
 
@@ -35,12 +80,41 @@ Spec Kit embraces a **polyglot-native, phase-driven** approach to software devel
 - Integration tests
 - Documentation updates
 
+**Plugin Artifacts**:
+
+- `reports/security/implement-scan.md` - Continuous security validation
+  - Plugin: `/security-scanning --mode=sast,deps --diff=reports/security/plan-scan.md`
+- **Gating**: Artifact must exist; CRITICAL/HIGH findings block review
+
 **Validation**: All automated checks pass
 
 - TypeScript: eslint, prettier, tsc, vitest
 - Rust: cargo fmt, cargo clippy, cargo test
+- Security: no unmitigated CRITICAL/HIGH findings
 
-### 3. Review Phase
+### 5. Analyze Phase
+
+**Goal**: Comprehensive security and compliance analysis
+
+**Deliverables**:
+
+- Security delta analysis
+- Compliance validation
+- Risk assessment update
+- Changelog updated
+
+**Plugin Artifacts**:
+
+- `reports/security/analyze-deltas.md` - Security changes since last analysis
+  - Plugin: `/security-scanning --mode=full`
+  - Appended to `docs/CHANGELOG.md`
+- `reports/compliance/analyze-compliance.md` - Compliance framework validation
+  - Plugin: `/security-compliance --frameworks=OWASP,CWE`
+- **Gating**: Both artifacts required; CRITICAL/HIGH findings block deployment
+
+**Validation**: Security validated, compliance confirmed, changes documented
+
+### 6. Review Phase
 
 **Goal**: Ensure code quality and maintainability
 
@@ -51,9 +125,9 @@ Spec Kit embraces a **polyglot-native, phase-driven** approach to software devel
 - Security reviewed
 - Documentation updated
 
-**Validation**: PR approved by maintainers
+**Validation**: PR approved by maintainers, all plugin artifacts validated
 
-### 4. Deploy Phase
+### 7. Deploy Phase
 
 **Goal**: Ship to production safely
 
@@ -64,7 +138,13 @@ Spec Kit embraces a **polyglot-native, phase-driven** approach to software devel
 - Monitoring configured
 - Rollback plan verified
 
-**Validation**: Deployment succeeds, health checks pass
+**Plugin Artifacts**:
+
+- All analyze phase artifacts must be validated
+- No unmitigated CRITICAL/HIGH findings
+- Compliance attestation documented
+
+**Validation**: Deployment succeeds, health checks pass, security gates cleared
 
 ## Turborepo Integration
 
