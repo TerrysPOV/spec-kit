@@ -8,11 +8,13 @@ This version adds a **Turborepo + Cargo workspace** scaffold and optional **Clau
 - **Cargo workspace** manages Rust crates under `rust/*` with root `Cargo.toml`.
 
 **Added paths**
+
 - `turbo.json`, `pnpm-workspace.yaml`, root `package.json`
 - `apps/web` (Next/TS), `packages/ui` (TS lib)
 - `Cargo.toml` (workspace), `rust/svc_api` (Axum service)
 
 **Quick run**
+
 ```bash
 # js/ts
 pnpm install -w || npm install -w

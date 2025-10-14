@@ -29,21 +29,21 @@ Specify supports multiple AI agents by generating agent-specific command files a
 
 ### Current Supported Agents
 
-| Agent | Directory | Format | CLI Tool | Description |
-|-------|-----------|---------|----------|-------------|
-| **Claude Code** | `.claude/commands/` | Markdown | `claude` | Anthropic's Claude Code CLI |
-| **Gemini CLI** | `.gemini/commands/` | TOML | `gemini` | Google's Gemini CLI |
-| **GitHub Copilot** | `.github/prompts/` | Markdown | N/A (IDE-based) | GitHub Copilot in VS Code |
-| **Cursor** | `.cursor/commands/` | Markdown | `cursor-agent` | Cursor CLI |
-| **Qwen Code** | `.qwen/commands/` | TOML | `qwen` | Alibaba's Qwen Code CLI |
-| **opencode** | `.opencode/command/` | Markdown | `opencode` | opencode CLI |
-| **Codex CLI** | `.codex/commands/` | Markdown | `codex` | Codex CLI |
-| **Windsurf** | `.windsurf/workflows/` | Markdown | N/A (IDE-based) | Windsurf IDE workflows |
-| **Kilo Code** | `.kilocode/rules/` | Markdown | N/A (IDE-based) | Kilo Code IDE |
-| **Auggie CLI** | `.augment/rules/` | Markdown | `auggie` | Auggie CLI |
-| **Roo Code** | `.roo/rules/` | Markdown | N/A (IDE-based) | Roo Code IDE |
-| **CodeBuddy** | `.codebuddy/commands/` | Markdown | `codebuddy` | CodeBuddy |
-| **Amazon Q Developer CLI** | `.amazonq/prompts/` | Markdown | `q` | Amazon Q Developer CLI |
+| Agent                      | Directory              | Format   | CLI Tool        | Description                 |
+| -------------------------- | ---------------------- | -------- | --------------- | --------------------------- |
+| **Claude Code**            | `.claude/commands/`    | Markdown | `claude`        | Anthropic's Claude Code CLI |
+| **Gemini CLI**             | `.gemini/commands/`    | TOML     | `gemini`        | Google's Gemini CLI         |
+| **GitHub Copilot**         | `.github/prompts/`     | Markdown | N/A (IDE-based) | GitHub Copilot in VS Code   |
+| **Cursor**                 | `.cursor/commands/`    | Markdown | `cursor-agent`  | Cursor CLI                  |
+| **Qwen Code**              | `.qwen/commands/`      | TOML     | `qwen`          | Alibaba's Qwen Code CLI     |
+| **opencode**               | `.opencode/command/`   | Markdown | `opencode`      | opencode CLI                |
+| **Codex CLI**              | `.codex/commands/`     | Markdown | `codex`         | Codex CLI                   |
+| **Windsurf**               | `.windsurf/workflows/` | Markdown | N/A (IDE-based) | Windsurf IDE workflows      |
+| **Kilo Code**              | `.kilocode/rules/`     | Markdown | N/A (IDE-based) | Kilo Code IDE               |
+| **Auggie CLI**             | `.augment/rules/`      | Markdown | `auggie`        | Auggie CLI                  |
+| **Roo Code**               | `.roo/rules/`          | Markdown | N/A (IDE-based) | Roo Code IDE                |
+| **CodeBuddy**              | `.codebuddy/commands/` | Markdown | `codebuddy`     | CodeBuddy                   |
+| **Amazon Q Developer CLI** | `.amazonq/prompts/`    | Markdown | `q`             | Amazon Q Developer CLI      |
 
 ### Step-by-Step Integration Guide
 
@@ -68,12 +68,14 @@ AGENT_CONFIG = {
 ```
 
 **Key Design Principle**: The dictionary key should match the actual executable name that users install. For example:
+
 - ✅ Use `"cursor-agent"` because the CLI tool is literally called `cursor-agent`
 - ❌ Don't use `"cursor"` as a shortcut if the tool is `cursor-agent`
 
 This eliminates the need for special-case mappings throughout the codebase.
 
 **Field Explanations**:
+
 - `name`: Human-readable display name shown to users
 - `folder`: Directory where agent-specific files are stored (relative to project root)
 - `install_url`: Installation documentation URL (set to `None` for IDE-based agents)
@@ -103,11 +105,13 @@ Update the **Supported AI Agents** section in `README.md` to include the new age
 Modify `.github/workflows/scripts/create-release-packages.sh`:
 
 ##### Add to ALL_AGENTS array:
+
 ```bash
 ALL_AGENTS=(claude gemini copilot cursor-agent qwen opencode windsurf q)
 ```
 
 ##### Add case statement for directory structure:
+
 ```bash
 case $agent in
   # ... existing cases ...
@@ -134,16 +138,18 @@ gh release create "$VERSION" \
 ##### Bash script (`scripts/bash/update-agent-context.sh`):
 
 Add file variable:
+
 ```bash
 WINDSURF_FILE="$REPO_ROOT/.windsurf/rules/specify-rules.md"
 ```
 
 Add to case statement:
+
 ```bash
 case "$AGENT_TYPE" in
   # ... existing cases ...
   windsurf) update_agent_file "$WINDSURF_FILE" "Windsurf" ;;
-  "") 
+  "")
     # ... existing checks ...
     [ -f "$WINDSURF_FILE" ] && update_agent_file "$WINDSURF_FILE" "Windsurf";
     # Update default creation condition
@@ -154,11 +160,13 @@ esac
 ##### PowerShell script (`scripts/powershell/update-agent-context.ps1`):
 
 Add file variable:
+
 ```powershell
 $windsurfFile = Join-Path $repoRoot '.windsurf/rules/specify-rules.md'
 ```
 
 Add to switch statement:
+
 ```powershell
 switch ($AgentType) {
     # ... existing cases ...
@@ -200,6 +208,7 @@ elif selected_ai == "windsurf":
 **CRITICAL**: When adding a new agent to AGENT_CONFIG, always use the **actual executable name** as the dictionary key, not a shortened or convenient version.
 
 **Why this matters:**
+
 - The `check_tool()` function uses `shutil.which(tool)` to find executables in the system PATH
 - If the key doesn't match the actual CLI tool name, you'll need special-case mappings throughout the codebase
 - This creates unnecessary complexity and maintenance burden
@@ -207,6 +216,7 @@ elif selected_ai == "windsurf":
 **Example - The Cursor Lesson:**
 
 ❌ **Wrong approach** (requires special-case mapping):
+
 ```python
 AGENT_CONFIG = {
     "cursor": {  # Shorthand that doesn't match the actual tool
@@ -222,6 +232,7 @@ if agent_key == "cursor":
 ```
 
 ✅ **Correct approach** (no mapping needed):
+
 ```python
 AGENT_CONFIG = {
     "cursor-agent": {  # Matches the actual executable name
@@ -234,6 +245,7 @@ AGENT_CONFIG = {
 ```
 
 **Benefits of this approach:**
+
 - Eliminates special-case logic scattered throughout the codebase
 - Makes the code more maintainable and easier to understand
 - Reduces the chance of bugs when adding new agents
@@ -244,21 +256,25 @@ AGENT_CONFIG = {
 ### CLI-Based Agents
 
 Require a command-line tool to be installed:
+
 - **Claude Code**: `claude` CLI
-- **Gemini CLI**: `gemini` CLI  
+- **Gemini CLI**: `gemini` CLI
 - **Cursor**: `cursor-agent` CLI
 - **Qwen Code**: `qwen` CLI
 - **opencode**: `opencode` CLI
 - **CodeBuddy**: `codebuddy` CLI
 
 ### IDE-Based Agents
+
 Work within integrated development environments:
+
 - **GitHub Copilot**: Built into VS Code/compatible editors
 - **Windsurf**: Built into Windsurf IDE
 
 ## Command File Formats
 
 ### Markdown Format
+
 Used by: Claude, Cursor, opencode, Windsurf, Amazon Q Developer
 
 ```markdown
@@ -270,6 +286,7 @@ Command content with {SCRIPT} and $ARGUMENTS placeholders.
 ```
 
 ### TOML Format
+
 Used by: Gemini, Qwen
 
 ```toml
@@ -291,6 +308,7 @@ Command content with {SCRIPT} and {{args}} placeholders.
 ## Argument Patterns
 
 Different agents use different argument placeholders:
+
 - **Markdown/prompt-based**: `$ARGUMENTS`
 - **TOML-based**: `{{args}}`
 - **Script placeholders**: `{SCRIPT}` (replaced with actual script path)
@@ -325,4 +343,4 @@ When adding new agents:
 
 ---
 
-*This documentation should be updated whenever new agents are added to maintain accuracy and completeness.*
+_This documentation should be updated whenever new agents are added to maintain accuracy and completeness._

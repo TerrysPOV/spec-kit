@@ -12,9 +12,11 @@ Spec Kit embraces a **polyglot-native, phase-driven** approach to software devel
 ## Phase Contracts
 
 ### 1. Spec Phase
+
 **Goal**: Define what we're building and why
 
 **Deliverables**:
+
 - Requirements documented
 - Architecture decisions recorded
 - API contracts defined
@@ -23,22 +25,27 @@ Spec Kit embraces a **polyglot-native, phase-driven** approach to software devel
 **Validation**: Documentation review, stakeholder approval
 
 ### 2. Implement Phase
+
 **Goal**: Write production-quality code
 
 **Deliverables**:
+
 - Feature implementation
 - Unit tests
 - Integration tests
 - Documentation updates
 
 **Validation**: All automated checks pass
+
 - TypeScript: eslint, prettier, tsc, vitest
 - Rust: cargo fmt, cargo clippy, cargo test
 
 ### 3. Review Phase
+
 **Goal**: Ensure code quality and maintainability
 
 **Deliverables**:
+
 - Peer review completed
 - Performance validated
 - Security reviewed
@@ -47,9 +54,11 @@ Spec Kit embraces a **polyglot-native, phase-driven** approach to software devel
 **Validation**: PR approved by maintainers
 
 ### 4. Deploy Phase
+
 **Goal**: Ship to production safely
 
 **Deliverables**:
+
 - Production build created
 - Deployment automation executed
 - Monitoring configured
@@ -71,6 +80,7 @@ pnpm typecheck # Type-check all workspaces
 ```
 
 **Task Dependencies**:
+
 - `build` depends on upstream package builds
 - Tasks are cached based on inputs (smart rebuilds)
 - Parallel execution where possible
@@ -88,6 +98,7 @@ cargo fmt --all             # Format all crates
 ```
 
 **Benefits**:
+
 - Shared dependency resolution
 - Unified build artifacts
 - Cross-crate refactoring support
@@ -102,6 +113,7 @@ bash orchestrator/hooks/lint_phase.sh implement
 ```
 
 **Hook Behavior**:
+
 - Auto-detects languages (Node/Rust)
 - Runs appropriate validators
 - Fails fast on first error
@@ -110,24 +122,28 @@ bash orchestrator/hooks/lint_phase.sh implement
 ## Best Practices
 
 ### TypeScript/Node.js
+
 - Use strict TypeScript configuration
 - Prefer named exports over default exports
 - Write tests alongside implementation
 - Use Prettier for consistent formatting
 
 ### Rust
+
 - Follow Rust idioms (rustfmt defaults)
 - Enable Clippy warnings in CI
 - Use `cargo fmt` before commit
 - Write doc tests for public APIs
 
 ### Git Workflow
+
 - Branch naming: `feature/description`, `fix/description`
 - Commit format: `type(scope): description`
 - Small, focused commits
 - Keep commits atomic and reversible
 
 ### Documentation
+
 - Keep docs close to code
 - Update docs in the same commit as code
 - Use inline comments for complex logic
@@ -143,5 +159,6 @@ bash orchestrator/hooks/lint_phase.sh implement
 **Formatting**: Prettier, rustfmt
 
 ---
+
 **Last Updated**: 2025-10-14
 **Status**: Active
