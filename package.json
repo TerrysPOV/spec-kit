@@ -15,5 +15,11 @@
   },
   "devDependencies": {
     "turbo": "^2.0.0"
+  },
+  "scripts": {
+    "dev:resume": "turbo run dev --filter @app/ai-resume-builder",
+    "build:resume": "turbo run build --filter @app/ai-resume-builder",
+    "lint:resume": "turbo run lint --filter @app/ai-resume-builder",
+    "test:resume": "turbo run test --filter @app/ai-resume-builder"
   }
 }

@@ -1,3 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["rust/svc_api"]
+members = [
+  "rust/svc_api",
+  "rust/resume_svc"    # add this if you added a new crate
+]

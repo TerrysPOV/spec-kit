@@ -1,0 +1,22 @@
+version: "3.9"
+services:
+  intel-svc:
+    build: ./rust/intel-svc
+    ports:
+      - "8081:8081"
+
+  render-svc:
+    build: ./rust/render-svc
+    ports:
+      - "8082:8082"
+
+  gateway:
+    build: ./gateway
+    ports:
+      - "8080:8080"
+    environment:
+      INTEL_URL: "http://intel-svc:8081/intel/lookup_company"
+      RENDER_URL: "http://render-svc:8082/render/resume"
+    depends_on:
+      - intel-svc
+      - render-svc

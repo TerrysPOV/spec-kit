@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "UserManifest",
+  "type": "object",
+  "properties": {
+    "user_id": { "type": "string" },
+    "summary": { "type": "string" },
+    "roles": { "type": "array", "items": { "type": "string" } },
+    "skills": { "type": "array", "items": { "type": "string" } },
+    "achievements": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "impact": { "type": "string" },
+          "metric": { "type": "string" },
+          "value": { "type": "number" }
+        },
+        "required": ["impact"]
+      }
+    },
+    "education": { "type": "array", "items": { "type": "string" } },
+    "last_updated": { "type": "string", "format": "date-time" }
+  },
+  "required": ["user_id", "skills", "roles"]
+}
