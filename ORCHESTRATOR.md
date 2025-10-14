@@ -171,6 +171,148 @@ Call from `lint_phase.sh`:
 bash orchestrator/hooks/custom_validator.sh || EXIT_CODE=$?
 ```
 
+## Plugin Governance
+
+### Overview
+
+The orchestrator enforces security and compliance through mandatory plugin invocations at each phase. See `orchestrator/plugins.policy.md` for complete policy.
+
+### Plugin Invocation Per Phase
+
+#### Spec Phase (`/spec`)
+
+**Required Plugins:**
+
+```bash
+# Security guidance
+/security-guidance --phase=spec --output=reports/security/spec-findings.md
+
+# API security (if APIs present)
+/backend-api-security --mode=threat-model --output=reports/security/spec-findings.md --append
+```
+
+**Output:** `reports/security/spec-findings.md`
+
+#### Plan Phase (`/plan`)
+
+**Required Plugins:**
+
+```bash
+# SAST + dependency scanning
+/security-scanning --mode=sast,deps --output=reports/security/plan-scan.md --severity=all
+```
+
+**Output:** `reports/security/plan-scan.md`
+
+#### Tasks Phase (`/tasks`)
+
+**Required Plugins:**
+
+```bash
+# Python unit test scaffolding (conditional)
+if [[ -f "requirements.txt" ]] || [[ -f "pyproject.toml" ]]; then
+  /unit-testing --mode=scaffold --output=reports/tests/tasks-unit-help.md
+fi
+```
+
+**Output:** `reports/tests/tasks-unit-help.md` (Python only)
+
+#### Implement Phase (`/implement`)
+
+**Required Plugins:**
+
+```bash
+# Continuous security scanning
+/security-scanning --mode=sast,deps --output=reports/security/implement-scan.md --diff=reports/security/plan-scan.md
+```
+
+**Output:** `reports/security/implement-scan.md`
+
+#### Analyze Phase (`/analyze`)
+
+**Required Plugins:**
+
+```bash
+# Full security analysis with delta tracking
+/security-scanning --mode=full --output=reports/security/analyze-deltas.md
+cat reports/security/analyze-deltas.md >> docs/CHANGELOG.md
+
+# Compliance validation
+/security-compliance --frameworks=OWASP,CWE --output=reports/compliance/analyze-compliance.md
+```
+
+**Outputs:**
+
+- `reports/security/analyze-deltas.md`
+- `reports/compliance/analyze-compliance.md`
+- Appends to `docs/CHANGELOG.md`
+
+### Artifact Gating
+
+The `lint_phase.sh` hook enforces artifact requirements:
+
+1. **Artifact Existence:** Required report files must exist
+2. **Severity Blocking:** CRITICAL/HIGH findings block progression
+3. **Mitigation Required:** Unmitigated findings require:
+   - Mitigation plan in `plans/plan.md`, OR
+   - Waiver ADR in `DECISIONS.md`
+
+**Exit Codes:**
+
+- `0` - All checks passed
+- `1` - Missing artifacts
+- `2` - Unmitigated CRITICAL/HIGH findings
+- `3` - Invalid mitigation documentation
+
+### Mitigation Documentation
+
+**In `plans/plan.md`:**
+
+```markdown
+## Security Mitigations
+
+### [FINDING-ID] Finding Title
+
+- **Severity:** CRITICAL/HIGH
+- **Status:** Mitigated | Accepted Risk | Waived
+- **Mitigation:** Detailed description of fix or compensating controls
+- **Verification:** How mitigation will be verified
+```
+
+**Waiver ADR in `DECISIONS.md`:**
+
+```markdown
+## ADR-XXX: Security Finding Waiver - [FINDING-ID]
+
+**Status:** Accepted
+**Date:** YYYY-MM-DD
+
+**Context:** Description of the security finding
+
+**Decision:** Accept the risk because [justification]
+
+**Consequences:**
+
+- Risk accepted: [description]
+- Compensating controls: [if any]
+- Review date: [when to reassess]
+```
+
+### Reports Directory Structure
+
+```
+reports/
+├── security/
+│   ├── spec-findings.md
+│   ├── plan-scan.md
+│   ├── implement-scan.md
+│   └── analyze-deltas.md
+├── tests/
+│   └── tasks-unit-help.md
+└── compliance/
+    └── analyze-compliance.md
+```
+
 ## Troubleshooting
 
 ### "command not found: pnpm"
