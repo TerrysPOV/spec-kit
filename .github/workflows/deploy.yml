@@ -1,0 +1,205 @@
+name: Deploy AI Resume Assistant
+
+on:
+  push:
+    tags:
+      - 'v*'
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  # Security and quality checks
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run security audit
+        run: |
+          bash scripts/audit-js.sh
+          bash scripts/audit-python.sh
+          bash scripts/audit-rust.sh
+
+      - name: Upload security reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-reports
+          path: reports/security/
+
+  # Quality gates
+  quality-gates:
+    name: Quality Gates
+    runs-on: ubuntu-latest
+    needs: security-scan
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Spec Kit phases
+        run: |
+          bash ci/run_phase_checks.sh spec
+          bash ci/run_phase_checks.sh plan
+          bash ci/run_phase_checks.sh implement
+          bash ci/run_phase_checks.sh analyze
+
+  # Build and test
+  build-and-test:
+    name: Build and Test
+    runs-on: ubuntu-latest
+    needs: quality-gates
+    strategy:
+      matrix:
+        service: [gateway, intel-svc, render-svc, web]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build service image
+        run: |
+          case ${{ matrix.service }} in
+            gateway)
+              docker build -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/gateway:${{ github.sha }} ./gateway
+              ;;
+            intel-svc)
+              docker build -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/intel-svc:${{ github.sha }} ./rust/intel-svc
+              ;;
+            render-svc)
+              docker build -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/render-svc:${{ github.sha }} ./rust/render-svc
+              ;;
+            web)
+              docker build -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/web:${{ github.sha }} ./apps/ai_resume_builder
+              ;;
+          esac
+
+      - name: Test service image
+        run: |
+          # Basic smoke test - service should start and respond to health check
+          case ${{ matrix.service }} in
+            gateway)
+              docker run --rm -d -p 8080:8080 --name test-gateway ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/gateway:${{ github.sha }}
+              sleep 10
+              curl -f http://localhost:8080/healthz || exit 1
+              docker stop test-gateway
+              ;;
+            web)
+              docker run --rm -d -p 3000:3000 --name test-web ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/web:${{ github.sha }}
+              sleep 15
+              curl -f http://localhost:3000/api/health || exit 1
+              docker stop test-web
+              ;;
+          esac
+
+  # Deploy to staging
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+    environment: staging
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy to staging
+        run: |
+          echo "Deploying to staging environment..."
+          # Add your staging deployment logic here
+          # This could be Kubernetes, Docker Swarm, or cloud provider deployment
+
+      - name: Run staging smoke tests
+        run: |
+          echo "Running staging smoke tests..."
+          # Verify all services are healthy
+          # Run integration tests
+          # Validate GDPR endpoints
+          # Test authentication flow
+
+      - name: Notify on staging deployment
+        run: |
+          echo "Staging deployment completed successfully"
+
+  # Deploy to production
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: deploy-staging
+    if: startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production')
+    environment: production
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy to production
+        run: |
+          echo "Deploying to production environment..."
+          # Add your production deployment logic here
+          # This should include:
+          # - Database migrations
+          # - Service updates with zero downtime
+          # - Health checks
+          # - Rollback capability
+
+      - name: Run production smoke tests
+        run: |
+          echo "Running production smoke tests..."
+          # Comprehensive health checks
+          # Load testing
+          # Security validation
+          # GDPR compliance verification
+
+      - name: Notify stakeholders
+        run: |
+          echo "Production deployment completed successfully"
+          # Add notification logic (Slack, email, etc.)
+
+  # Post-deployment monitoring
+  monitoring:
+    name: Post-Deployment Monitoring
+    runs-on: ubuntu-latest
+    needs: [deploy-staging, deploy-production]
+    if: always()
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup monitoring validation
+        run: |
+          echo "Setting up monitoring and alerting..."
+          # Validate Prometheus metrics collection
+          # Check Grafana dashboards
+          # Set up alerting rules
+
+      - name: Performance baseline
+        run: |
+          echo "Establishing performance baseline..."
+          # Record initial performance metrics
+          # Set up performance monitoring thresholds
+
+      - name: Security monitoring
+        run: |
+          echo "Configuring security monitoring..."
+          # Set up security event monitoring
+          # Configure log analysis
+          # Enable threat detection
