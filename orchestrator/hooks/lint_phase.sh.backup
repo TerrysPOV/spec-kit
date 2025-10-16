@@ -57,7 +57,7 @@ validate_plugin_artifacts() {
   fi
 
   # Check for unmitigated CRITICAL/HIGH findings
-   # Skip security findings check for tasks phase - no security reports to validate
+  check_security_findings "$phase"
   artifact_exit_code=$?
 
   if [[ $artifact_exit_code -eq 0 ]]; then
@@ -123,16 +123,16 @@ if [[ -f "package.json" ]]; then
   case "$PHASE" in
     implement)
       echo "  • Running ESLint..."
-      cd apps/ai_resume_builder && npm run lint || EXIT_CODE=$?
+      pnpm run lint || npm run lint || EXIT_CODE=$?
 
       echo "  • Running Prettier..."
-      npx prettier --check . || EXIT_CODE=$?
+      pnpm exec prettier --check apps packages || npx prettier --check apps packages || EXIT_CODE=$?
 
       echo "  • Running TypeScript..."
-      cd apps/ai_resume_builder && npm run typecheck || EXIT_CODE=$?
+      pnpm run typecheck || npm run typecheck || EXIT_CODE=$?
 
       echo "  • Running tests..."
-      cd apps/ai_resume_builder && npm run test || EXIT_CODE=$?
+      pnpm run test || npm run test || EXIT_CODE=$?
       ;;
     *)
       echo "  ℹ Phase '$PHASE' - skipping Node checks"

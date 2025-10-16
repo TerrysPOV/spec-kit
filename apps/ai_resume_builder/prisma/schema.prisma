@@ -1,0 +1,89 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  image     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  resumes     Resume[]
+  jobMatches  JobMatch[]
+
+  @@map("users")
+}
+
+model Resume {
+  id          String   @id @default(cuid())
+  userId      String
+  title       String
+  content     Json     // Resume JSON structure
+  fileUrl     String?  // Original file URL if uploaded
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  jobMatches  JobMatch[]
+
+  @@map("resumes")
+}
+
+model CompanyProfile {
+  id          String   @id @default(cuid())
+  domain      String   @unique
+  name        String?
+  description String?
+  industry    String?
+  size        String?
+  location    String?
+  signals     Json     // Array of company signals
+  people      Json     // Array of key people
+  products    Json     // Array of products/services
+  sources     Json     // Array of data sources
+  lastUpdated DateTime @default(now())
+  createdAt   DateTime @default(now())
+
+  // Relations
+  jobMatches  JobMatch[]
+
+  @@map("company_profiles")
+}
+
+model JobMatch {
+  id          String   @id @default(cuid())
+  userId      String
+  resumeId    String
+  companyId   String
+  jobTitle    String
+  jobDescription String
+  status      String   @default("active") // active, applied, rejected, accepted
+  matchScore  Float?
+  coverLetter String?
+  brief       String?  // Company brief/intelligence
+  pdfUrl      String?  // Generated PDF URL
+  appliedAt   DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  resume      Resume        @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+  company     CompanyProfile @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, resumeId, companyId])
+  @@map("job_matches")
+}

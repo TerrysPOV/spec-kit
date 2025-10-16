@@ -1,22 +1,82 @@
 version: "3.9"
 services:
+  # Database
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: ai_resume
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d ai_resume"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis for rate limiting and caching
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Application services
   intel-svc:
     build: ./rust/intel-svc
     ports:
       - "8081:8081"
+    depends_on:
+      postgres:
+        condition: service_healthy
 
   render-svc:
     build: ./rust/render-svc
     ports:
       - "8082:8082"
+    depends_on:
+      postgres:
+        condition: service_healthy
 
   gateway:
     build: ./gateway
     ports:
       - "8080:8080"
     environment:
+      # Service URLs
       INTEL_URL: "http://intel-svc:8081/intel/lookup_company"
       RENDER_URL: "http://render-svc:8082/render/resume"
+      # Database
+      DATABASE_URL: "postgresql://postgres:postgres@postgres:5432/ai_resume"
+      # Redis
+      REDIS_URL: "redis://redis:6379/0"
+      # Auth
+      NEXTAUTH_SECRET: "your-secret-key-change-in-production"
+      NEXTAUTH_URL: "http://localhost:3000"
+      # OpenRouter
+      OPENROUTER_API_KEY: "${OPENROUTER_API_KEY}"
+      # Rate limiting
+      MONTHLY_COST_CAP_USD: "10"
+      ALLOWED_EMAILS: "admin@example.com"
     depends_on:
-      - intel-svc
-      - render-svc
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      intel-svc:
+        condition: service_started
+      render-svc:
+        condition: service_started
+
+volumes:
+  postgres_data:
+  redis_data:
