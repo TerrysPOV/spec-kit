@@ -1,0 +1,4 @@
+[submodule "apps/ai_resume_builder"]
+	path = apps/ai_resume_builder
+	url = git@github.com:TerrysPOV/ai_resume_builder-private.git
+	branch = main
