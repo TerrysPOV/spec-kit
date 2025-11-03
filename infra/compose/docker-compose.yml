@@ -1,6 +1,6 @@
 version: "3.9"
+
 services:
-  # Database
   postgres:
     image: postgres:15-alpine
     environment:
@@ -17,7 +17,6 @@ services:
       timeout: 5s
       retries: 5
 
-  # Redis for rate limiting and caching
   redis:
     image: redis:7-alpine
     ports:
@@ -30,9 +29,11 @@ services:
       timeout: 5s
       retries: 5
 
-  # Application services
   intel-svc:
-    build: ./rust/intel-svc
+    build:
+      context: ../..
+      dockerfile: apps/ai_resume_builder/rust/intel-svc/Dockerfile
+    image: ${REGISTRY:-ghcr.io}/${IMAGE_REPO:-ai-resume-assistant}/intel-svc:${TAG:-latest}
     ports:
       - "8081:8081"
     depends_on:
@@ -40,31 +41,51 @@ services:
         condition: service_healthy
 
   render-svc:
-    build: ./rust/render-svc
+    build:
+      context: ../..
+      dockerfile: apps/ai_resume_builder/rust/render-svc/Dockerfile
+    image: ${REGISTRY:-ghcr.io}/${IMAGE_REPO:-ai-resume-assistant}/render-svc:${TAG:-latest}
     ports:
       - "8082:8082"
     depends_on:
       postgres:
         condition: service_healthy
 
+  svc-api:
+    build:
+      context: ../..
+      dockerfile: apps/ai_resume_builder/rust/svc_api/Dockerfile
+    image: ${REGISTRY:-ghcr.io}/${IMAGE_REPO:-ai-resume-assistant}/svc_api:${TAG:-latest}
+    ports:
+      - "8083:8083"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  text-extract-svc:
+    build:
+      context: ../..
+      dockerfile: apps/ai_resume_builder/rust/text-extract-svc/Dockerfile
+    image: ${REGISTRY:-ghcr.io}/${IMAGE_REPO:-ai-resume-assistant}/text-extract-svc:${TAG:-latest}
+    ports:
+      - "8090:8090"
+
   gateway:
-    build: ./gateway
+    build:
+      context: ../..
+      dockerfile: apps/ai_resume_builder/gateway/Dockerfile
+    image: ${REGISTRY:-ghcr.io}/${IMAGE_REPO:-ai-resume-assistant}/gateway:${TAG:-latest}
     ports:
       - "8080:8080"
     environment:
-      # Service URLs
       INTEL_URL: "http://intel-svc:8081/intel/lookup_company"
       RENDER_URL: "http://render-svc:8082/render/resume"
-      # Database
+      TEXT_EXTRACT_BASE_URL: "http://text-extract-svc:8090"
       DATABASE_URL: "postgresql://postgres:postgres@postgres:5432/ai_resume"
-      # Redis
       REDIS_URL: "redis://redis:6379/0"
-      # Auth
       NEXTAUTH_SECRET: "your-secret-key-change-in-production"
       NEXTAUTH_URL: "http://localhost:3000"
-      # OpenRouter
-      OPENROUTER_API_KEY: "${OPENROUTER_API_KEY}"
-      # Rate limiting
+      OPENROUTER_API_KEY: "${OPENROUTER_API_KEY:-}"
       MONTHLY_COST_CAP_USD: "10"
       ALLOWED_EMAILS: "admin@example.com"
     depends_on:
@@ -75,6 +96,10 @@ services:
       intel-svc:
         condition: service_started
       render-svc:
+        condition: service_started
+      text-extract-svc:
+        condition: service_started
+      svc-api:
         condition: service_started
 
 volumes:
