@@ -1,0 +1,24 @@
+@baseUrl = http://localhost:8080
+@userId = demo-user-overbudget
+
+### Over budget -> expect 402 with suggestions
+POST {{baseUrl}}/v1/apply
+Content-Type: application/json
+
+{
+  "user_id": "{{userId}}",
+  "cv_json": { "raw_text": "Long resume text emphasizing enterprise distribution achievements across EMEA." },
+  "pd_text": "Looking for strategic leader to run pan-European wealth distribution.",
+  "company_domain": "example.com",
+  "model": "anthropic/claude-3-5-sonnet",
+  "budget_gbp": 0.01
+}
+
+> {%
+const body = JSON.parse(response.body);
+client.test("over budget returns 402", () => {
+  client.assert(response.status === 402, "expected HTTP 402");
+  client.assert(body.error === "over_budget", "error code over_budget");
+  client.assert(Array.isArray(body.suggestions) && body.suggestions.length > 0, "suggestions provided");
+});
+%}

@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "UserManifest",
+  "type": "object",
+  "properties": {
+    "user_id": { "type": "string" },
+    "cv_json": { "type": "object" },
+    "pd_text": { "type": "string" },
+    "pd_file_url": { "type": "string" },
+    "role_family": { "type": "string" },
+    "achievements": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "skills": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "last_updated": { "type": "string", "format": "date-time" }
+  },
+  "required": ["user_id", "cv_json"],
+  "additionalProperties": true
+}

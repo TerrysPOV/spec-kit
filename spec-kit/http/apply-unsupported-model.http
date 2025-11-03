@@ -1,0 +1,22 @@
+@baseUrl = http://localhost:8080
+@userId = demo-user-unsupported
+
+### Unsupported model should return 400
+POST {{baseUrl}}/v1/apply
+Content-Type: application/json
+
+{
+  "user_id": "{{userId}}",
+  "cv_json": { "raw_text": "Sample resume text" },
+  "pd_text": "Sample PD",
+  "company_domain": "example.com",
+  "model": "openai/gpt-99"
+}
+
+> {%
+const body = JSON.parse(response.body);
+client.test("unsupported model rejected", () => {
+  client.assert(response.status === 400, "expected HTTP 400");
+  client.assert(body.error === "unsupported_model", "error code for unsupported model");
+});
+%}

@@ -1,0 +1,39 @@
+@baseUrl = http://localhost:8080
+@userId = demo-user-success
+
+### Happy path: compose resume + cover letter
+POST {{baseUrl}}/v1/apply
+Content-Type: application/json
+
+{
+  "user_id": "{{userId}}",
+  "cv_json": {
+    "personalInfo": {
+      "name": "Demo Candidate"
+    },
+    "summary": "Built growth programs across fintech and wealth management lines.",
+    "experience": [
+      {
+        "title": "Relationship Manager",
+        "company": "Rathbones",
+        "duration": "2021-2024",
+        "description": "Expanded adviser portfolio revenue by 32% year over year."
+      }
+    ]
+  },
+  "pd_text": "Rathbones seeks distribution leaders to deepen adviser relationships and expand managed assets across the UK.",
+  "company_domain": "rathbones.com",
+  "role_family": "Distribution",
+  "model": "anthropic/claude-3-5-sonnet",
+  "creativity": 0.6
+}
+
+> {%
+const body = JSON.parse(response.body);
+client.test("compose request succeeds", () => {
+  client.assert(response.status === 200, `expected HTTP 200, got ${response.status}`);
+  client.assert(body.tokens_in > 0, "tokens_in should be greater than 0");
+  client.assert(body.tokens_out > 0, "tokens_out should be greater than 0");
+  client.assert(typeof body.pdf_url === "string" && body.pdf_url.length > 0, "pdf_url returned");
+});
+%}

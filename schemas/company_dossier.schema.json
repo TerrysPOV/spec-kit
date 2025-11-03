@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CompanyDossier",
+  "type": "object",
+  "properties": {
+    "domain": { "type": "string" },
+    "name": { "type": "string" },
+    "products": { "type": "array", "items": { "type": "string" } },
+    "role_family": { "type": "string" },
+    "people": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "title": { "type": "string" },
+          "linkedin": { "type": "string" }
+        },
+        "required": ["name"]
+      }
+    },
+    "signals": { "type": "array", "items": { "type": "string" } },
+    "sources": { "type": "array", "items": { "type": "string" } },
+    "indexed_at": { "type": "string", "format": "date-time" }
+  },
+  "required": ["domain", "role_family"],
+  "additionalProperties": true
+}

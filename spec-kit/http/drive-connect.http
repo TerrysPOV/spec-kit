@@ -1,0 +1,23 @@
+@baseUrl = http://localhost:8080
+@userId = demo-user-status
+@authCode = paste_google_auth_code_here
+
+### Exchange OAuth code for Drive tokens
+# Obtain @authCode by running the Google consent screen generated from the UI.
+POST {{baseUrl}}/integrations/google/drive/connect
+Content-Type: application/json
+
+{
+  "user_id": "{{userId}}",
+  "code": "{{authCode}}"
+}
+
+> {%
+const body = JSON.parse(response.body);
+client.test("drive connect requires successful exchange", () => {
+  client.assert([200, 502].includes(response.status), "expect success or upstream failure");
+  if (response.status === 200) {
+    client.assert(body.connected === true, "drive connected flag true");
+  }
+});
+%}

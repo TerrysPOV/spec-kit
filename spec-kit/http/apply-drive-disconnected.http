@@ -1,0 +1,24 @@
+@baseUrl = http://localhost:8080
+@userId = demo-user-no-drive
+
+### When Drive is not connected we return persist_warning=true but still deliver results
+POST {{baseUrl}}/v1/apply
+Content-Type: application/json
+
+{
+  "user_id": "{{userId}}",
+  "cv_json": { "raw_text": "Generalist leader with proven wins in distribution." },
+  "pd_text": "Looking for someone to expand UK wealth adviser footprint.",
+  "company_domain": "example.com",
+  "model": "deepseek/deepseek-chat",
+  "creativity": 0.3
+}
+
+> {%
+const body = JSON.parse(response.body);
+client.test("persist warning present when Drive disconnected", () => {
+  client.assert(response.status === 200, "expected HTTP 200");
+  client.assert(body.persist_warning === true, "persist_warning flag should be true");
+  client.assert(typeof body.pdf_url === "string" && body.pdf_url.startsWith("data:"), "data url provided for download");
+});
+%}

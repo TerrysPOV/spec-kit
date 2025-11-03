@@ -1,0 +1,14 @@
+@baseUrl = http://localhost:8080
+@userId = demo-user-status
+
+### Drive status check
+GET {{baseUrl}}/integrations/google/drive/status?user_id={{userId}}
+Accept: application/json
+
+> {%
+const body = JSON.parse(response.body);
+client.test("status request succeeds", () => {
+  client.assert(response.status === 200, "expected HTTP 200");
+  client.assert(Object.prototype.hasOwnProperty.call(body, "connected"), "connected flag present");
+});
+%}

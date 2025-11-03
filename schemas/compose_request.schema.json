@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ComposeRequest",
+  "type": "object",
+  "properties": {
+    "user_id": { "type": "string" },
+    "cv_json": { "type": "object" },
+    "pd_text": { "type": "string" },
+    "pd_file_url": { "type": "string" },
+    "company_domain": { "type": "string" },
+    "role_family": { "type": "string" },
+    "model": { "type": "string" },
+    "creativity": { "type": "number" }
+  },
+  "required": ["user_id", "cv_json", "company_domain"],
+  "anyOf": [
+    { "required": ["pd_text"] },
+    { "required": ["pd_file_url"] }
+  ],
+  "additionalProperties": true
+}
