@@ -17,6 +17,56 @@ services:
       timeout: 5s
       retries: 5
 
+  web:
+    build:
+      context: ../..
+      dockerfile: apps/ai_resume_builder/Dockerfile
+    image: ${REGISTRY:-ghcr.io}/${IMAGE_REPO:-ai-resume-assistant}/web:${TAG:-latest}
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_BASE_URL: "http://gateway:8080"
+    depends_on:
+      gateway:
+        condition: service_started
+    restart: unless-stopped
+
+  traefik:
+    image: traefik:v3.1
+    command:
+      - "--api.dashboard=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8088:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    depends_on:
+      - gateway
+      - web
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    restart: unless-stopped
+
   redis:
     image: redis:7-alpine
     ports:
